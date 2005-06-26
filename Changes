@@ -1,0 +1,4 @@
+Revision history for Perl extension File::quotas.
+
+0.10  Sun Jun 26 00:00:00 2005
+	- beta version, read, write, and edit quotas.

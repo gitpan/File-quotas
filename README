@@ -1,0 +1,95 @@
+File/quotas version 0.10
+=======================
+
+NAME
+
+    File::quotas - Interface to quotas databases
+
+SYNOPSIS
+
+      use File::quotas;  
+
+      $quotas = new File::quotas( );
+
+      # to load data form existing mount point
+      $quotas = new File::quotas('/mount/point');
+
+      $quotas->display_quotas();
+
+      # add the quota on uid 10
+      $quotas->set_entry(10, '75000', '100000', '75000', '100000');
+
+      $quotas->write_quotas('/mount/point');
+
+DESCRIPTION
+
+    File::quotas provides a perl interface to quotas files.
+
+USAGE
+
+    new()
+      Constructor.
+      Returns new instance of File::quotas.
+
+
+    display_quotas()
+
+      Displays quota information once loaded in human-readable form.
+
+
+    load_quotas()
+      parameters:
+        $mountPoint, mount point to read 'quotas' from, like /export/home.
+
+      Decompresses quotas file and loads into object.
+
+
+    write_quotas()
+      parameters:
+        $mountPoint, mount point to write 'quotas' to, like /export/home.
+
+      Recompresses relevant object data into quotas file.
+      While beta, saves to 'quotas.out', you many then move it over.
+
+    set_entry()
+      parameters:
+        $uid, UID to apply quota to.
+        $blocks_soft, soft disk block limit in bytes.
+        $blocks_hard, hard disk block limit in bytes.
+        $inodes_soft, soft index node limit in bytes.
+        $inodes_hard, hard index node limit in bytes.
+
+      Sets quota entry for UID
+
+    del_entry()
+      parameters:
+        $uid, UID to delete quota.
+
+      Deletes quota entry for UID
+
+    null_data()
+
+     Internal function, used for object reuse.
+    
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make install
+
+DEPENDENCIES
+
+  HTTP::Request::Common
+  LWP::UserAgent
+
+BUGS
+
+  Its beta with minimal functionality, here there be demons.
+
+COPYRIGHT AND LICENCE
+
+Copyright (C) 2004/2005 Charles A Morris.  All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
