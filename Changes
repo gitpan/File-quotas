@@ -2,3 +2,8 @@ Revision history for Perl extension File::quotas.
 
 0.10  Sun Jun 26 00:00:00 2005
 	- beta version, read, write, and edit quotas.
+
+0.20  Mon Jun 27 00:00:00 2005
+	- fixed weird "devide by two" error.
+	- fixed accidental switch of soft and hard limit in write_quotas()
+	- fixed typos.

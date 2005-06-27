@@ -15,7 +15,7 @@ our $marker = pack("x32");
 our $uids_read;
 
 BEGIN {
-  $VERSION = '0.10';
+  $VERSION = '0.20';
 }
 
 #---------- Constructor ----------#
@@ -55,18 +55,22 @@ sub load_quotas
   for($uid = 0; read($QUOTAS_HDL, $bytes, 32) > 0; $uid++)
   {
   $bytes eq $marker and next;
-    #if we get here, we know we have a valid entry- so lets record.
-  $entries{$uid}{username} = getpwuid($uid); #this is so easy to get, should we put it in? it wastes space..
 
-  #32 bit unsigned long unpack()
-  ($entries{$uid}{blocks_soft},
-   $entries{$uid}{blocks_hard},
-   $entries{$uid}{blocks_used},
-   $entries{$uid}{inodes_soft},
-   $entries{$uid}{inodes_hard},
-   $entries{$uid}{inodes_used},
-   $entries{$uid}{grace_used},
-   $entries{$uid}{grace_full} ) = unpack("L*", $bytes);
+    #if we get here, we know we have a valid entry- so lets record.
+
+    $entries{$uid}{username} = getpwuid($uid); #this is so easy to get, should we put it in? it wastes space..
+
+    ($entries{$uid}{blocks_hard},
+     $entries{$uid}{blocks_soft},
+     $entries{$uid}{blocks_used},
+     $entries{$uid}{inodes_hard},
+     $entries{$uid}{inodes_soft},
+     $entries{$uid}{inodes_used},
+     $entries{$uid}{grace_used},
+     $entries{$uid}{grace_full} ) = unpack("L*", $bytes);
+
+    $entries{$uid}{blocks_hard} = $entries{$uid}{blocks_hard} / 2; #the weird devided by 2 error.
+    $entries{$uid}{blocks_soft} = $entries{$uid}{blocks_soft} / 2; #may be solaris speicific
   }
 
 $uids_read = $uid;
@@ -81,17 +85,22 @@ sub write_quotas
   my ($instance, $mountPoint) = @_;
   die "expecting a __PACKAGE__\n" unless $instance->isa(__PACKAGE__);
 
-  open( QUOTAS_HDL, ">$mountPoint/quotas.out" ); #will need to be OS specific. (solaris currently)
+  #will need to be OS specific. (solaris currently)
+  open( QUOTAS_HDL, ">$mountPoint/quotas" );
 
-#  foreach my $uid ( keys(%entries) )
   for($uid = 0; $uid < $uids_read; $uid++)
   {
     if ( $entries{$uid} )
     {
-      #32 bit unsigned long pack()
-      print QUOTAS_HDL pack("L*", $entries{$uid}{blocks_soft}, $entries{$uid}{blocks_hard}, $entries{$uid}{blocks_used},
-                                  $entries{$uid}{inodes_soft}, $entries{$uid}{inodes_hard}, $entries{$uid}{inodes_used},
-                                  $entries{$uid}{grace_used}, $entries{$uid}{grace_full} );
+      print QUOTAS_HDL pack("L*", ($entries{$uid}{blocks_hard} * 2),
+                                  ($entries{$uid}{blocks_soft} * 2),
+                                  $entries{$uid}{blocks_used},
+                                  $entries{$uid}{inodes_hard},
+                                  $entries{$uid}{inodes_soft},
+                                  $entries{$uid}{inodes_used},
+                                  $entries{$uid}{grace_used},
+                                  $entries{$uid}{grace_full}
+                           );
     }
     else
     {
@@ -109,10 +118,13 @@ sub null_data()
   my ($instance) = shift;
   die "expecting a __PACKAGE__\n" unless $instance->isa(__PACKAGE__);
 
-  %entries = undef;
-  %entries = undef;
-  %entries = undef;
+  undef( %entries );
+  undef( $last_loaded_mp );
+  undef( $uids_read );
 
+  our %entries;
+  our $last_loaded_mp;
+  our $uids_read;
 }
 
 sub display_quotas()
@@ -122,7 +134,7 @@ sub display_quotas()
 
   foreach my $uid ( keys(%entries) )
   {
-    print "Quotas for " . $entries{$uid}{username}. "($uid):\n";
+    print "Quotas for " . $entries{$uid}{username}. " ($uid):\n";
     
     print "disk blocks (U/S/H): " . $entries{$uid}{blocks_used} . '/' .
                                     $entries{$uid}{blocks_soft} . '/' .
@@ -178,22 +190,23 @@ __END__
       $quotas = new File::quotas( );
 
       # to load data form existing mount point
-      $quotas = new File::quotas('/mount/point');
+      $quotas = new File::quotas('/mount/point/');
 
       $quotas->display_quotas();
 
       # add the quota on uid 10
       $quotas->set_entry(10, '75000', '100000', '75000', '100000');
 
-      $quotas->write_quotas('/mount/point');
+      $quotas->write_quotas('/mount/point/');
 
 =head1 DESCRIPTION
 
-    File::quotas provides a perl interface to quotas files.
+    File::quotas provides a perl interface to 'quotas' files.
 
 =head1 USAGE
 
     new()
+
       Constructor.
       Returns new instance of File::quotas.
 
@@ -215,11 +228,10 @@ __END__
         $mountPoint, mount point to write 'quotas' to, like /export/home.
 
       Recompresses relevant object data into quotas file.
-      While beta, saves to 'quotas.out', you many then move it over.
 
     set_entry()
       parameters:
-        $uid, UID to apply quota to.
+        $uid, UID or username to apply quota to.
         $blocks_soft, soft disk block limit in bytes.
         $blocks_hard, hard disk block limit in bytes.
         $inodes_soft, soft index node limit in bytes.
@@ -236,7 +248,7 @@ __END__
     null_data()
 
      Internal function, used for object reuse.
-    
+
 =head1 INSTALLATION
 
 To install this module type the following:
@@ -251,11 +263,13 @@ To install this module type the following:
 
 =head1 BUGS
 
-  Its beta, here there may be demons;
-  however none have been sighted yet.
+  All testing so far has been done on solaris.
+
+  Other than that, all demons sighted have been expelled,
+  see CHANGES document for more info.
 
 =head1 AUTHORS
 
-Copyright (C) 2004/2005 Charles A Morris.  All rights reserved.
+Copyright (C) 2005 Charles A Morris.  All rights reserved.
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
