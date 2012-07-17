@@ -7,3 +7,10 @@ Revision history for Perl extension File::quotas.
 	- fixed weird "devide by two" error.
 	- fixed accidental switch of soft and hard limit in write_quotas()
 	- fixed typos.
+
+0.30  Mon Jun 25 00:00:00 2012
+	- added a somewhat trivial test suite
+	- there will be another update with more efficiency changes
+	- added a patch by Jesse L Becker (jbecker@northwestern.edu):
+	- 	additon of the write_one_entry method
+	- 	restructure of some module interals

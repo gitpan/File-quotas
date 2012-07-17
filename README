@@ -1,4 +1,4 @@
-File/quotas version 0.20
+File/quotas version 0.30
 =======================
 
 NAME
@@ -90,6 +90,9 @@ BUGS
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2004/2005 Charles A Morris.  All rights reserved.
+Copyleft 2004-2012 Charles A Morris
+
+Additional contributions from:
+Jesse L Becker (jbecker@northwester.edu)
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
